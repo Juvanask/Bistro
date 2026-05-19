@@ -10,6 +10,7 @@ import { Display, Body, Eyebrow, Price, Btn } from '../components/atoms';
 import { Chip } from '../components/Chip';
 import { useThemeStore } from '../store/themeStore';
 import { useCartStore } from '../store/cartStore';
+import { useChatStore } from '../store/chatStore';
 import { useUiStore } from '../store/uiStore';
 import { api } from '../lib/api';
 import { FONTS } from '../constants/theme';
@@ -22,6 +23,7 @@ export default function Checkout() {
   const lines = useCartStore((s) => s.lines);
   const describeLine = useCartStore((s) => s.describeLine);
   const clear = useCartStore((s) => s.clear);
+  const resetChat = useChatStore((s) => s.reset);
   const pushToast = useUiStore((s) => s.pushToast);
 
   const [order, setOrder] = useState(null);
@@ -54,8 +56,10 @@ export default function Checkout() {
   }, []);
 
   const done = () => {
+    // order placed — wipe the cart AND the chat, then return to the entrance
     clear();
-    router.replace('/home');
+    resetChat();
+    router.replace('/');
     pushToast('Order’s on the pass. Léa will check in shortly.');
   };
 

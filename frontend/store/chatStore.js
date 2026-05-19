@@ -1,9 +1,10 @@
 import { create } from 'zustand';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api } from '../lib/api';
 import { useCartStore } from './cartStore';
 
-const KEY = '@bistro/chat';
+// The chat is session-only — it is never persisted. Closing/reopening the app,
+// or placing an order, starts a fresh conversation with Léa.
+
 const uid = () => 'M' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
 
 function greeting() {
@@ -22,27 +23,9 @@ export const useChatStore = create((set, get) => ({
   pending: false,
   context: { last_item_ref: null },
 
-  hydrate: async () => {
-    try {
-      const raw = await AsyncStorage.getItem(KEY);
-      if (raw) {
-        const d = JSON.parse(raw);
-        set({ messages: d.messages?.length ? d.messages : seed(), context: d.context || { last_item_ref: null } });
-      }
-    } catch {}
-  },
+  reset: () => set({ messages: seed(), context: { last_item_ref: null }, pending: false }),
 
-  reset: () => {
-    set({ messages: seed(), context: { last_item_ref: null }, pending: false });
-    AsyncStorage.removeItem(KEY);
-  },
-
-  _save: () => AsyncStorage.setItem(KEY, JSON.stringify({ messages: get().messages, context: get().context })),
-
-  _push: (m) => {
-    set((s) => ({ messages: [...s.messages, { id: uid(), ...m }] }));
-    get()._save();
-  },
+  _push: (m) => set((s) => ({ messages: [...s.messages, { id: uid(), ...m }] })),
 
   send: async (text) => {
     const trimmed = (text || '').trim();
@@ -104,7 +87,6 @@ export const useChatStore = create((set, get) => ({
         set({ context: { last_item_ref: res.context.last_item_ref } });
         useCartStore.getState().setLastItemRef(res.context.last_item_ref);
       }
-      get()._save();
     } catch (e) {
       get()._push({ type: 'lea', text: 'Lost you for a second there — the line dropped. Say that again?' });
     } finally {

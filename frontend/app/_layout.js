@@ -80,12 +80,11 @@ export default function RootLayout() {
   const t = useThemeStore((s) => s.theme);
   const hydrateTheme = useThemeStore((s) => s.hydrate);
   const hydrateCart = useCartStore((s) => s.hydrate);
-  const hydrateChat = useChatStore((s) => s.hydrate);
 
   useEffect(() => {
+    // theme + cart persist across restarts; the chat is intentionally session-only
     hydrateTheme();
     hydrateCart();
-    hydrateChat();
   }, []);
 
   const ready = serif && geist && mono;
